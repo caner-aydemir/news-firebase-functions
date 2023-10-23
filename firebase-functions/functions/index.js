@@ -1,3 +1,4 @@
+const axios = require("axios");
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 admin.initializeApp({
@@ -11,7 +12,6 @@ exports.signUp = functions.https.onCall(async (data, context) => {
     let email = data.email
     let password = data.password
     try {
-
         const registerUser = await getAuth().createUser({
             email,password
         })
@@ -19,16 +19,9 @@ exports.signUp = functions.https.onCall(async (data, context) => {
             name: name,
             email: email,
         }, {merge: true})
-
-        const uid = registerUser.uid
-         const customToken = await getAuth()
-            .createCustomToken(uid)
-
-
         return {
             success: true,
             registerUser : registerUser,
-            token : customToken
         };
     } catch (error) {
         return {
@@ -37,5 +30,30 @@ exports.signUp = functions.https.onCall(async (data, context) => {
         };
     }
 });
-//signUp({name : "Test50" , email: "test59@gmail.com" , password:"123456"})
 
+exports.getNews = functions.https.onCall(async (data, context)=> {
+    try {
+        let category = data.category
+        let response ;
+        let dataNews
+        if(category === null)
+        {
+             response =  await axios.get(`https://newsapi.org/v2/top-headlines?country=us&apiKey=6a38f7f13e644d2eb1f0b3bed5d5dbe3`)
+        }
+        else
+        {
+             response =  await axios.get(`https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=6a38f7f13e644d2eb1f0b3bed5d5dbe3`)
+        }
+        dataNews = response.data
+        return {
+            category,
+            data:dataNews,
+            success: true,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message,
+        };
+    }
+});
